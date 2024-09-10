@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String     @id @default(uuid()) @db.Uuid
+  email       String     @unique
+  isAdmin     Boolean    @default(false)
+  isApplicant Boolean
+  verified    Boolean    @default(false)
+  roles       Role[]
+  auth        Auth?
+  applicant   Applicant?
+  Otp         Otp[]
+}
+
+model Applicant {
+  id             String  @id @default(uuid()) @db.Uuid
+  firstName      String
+  lastName       String
+  gender         String
+  phoneNumber    String  @unique
+  altPhoneNumber String?
+
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @unique @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Auth {
+  user     User    @relation(fields: [userId], references: [id])
+  userId   String  @id @db.Uuid
+  passHash String?
+}
+
+model Role {
+  id           String      @id @default(uuid()) @db.Uuid
+  name         String      @unique
+  user         User[]
+  permission   Permission? @relation(fields: [permissionId], references: [id])
+  permissionId String?     @db.Uuid
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model Permission {
+  id        String       @id @default(uuid()) @db.Uuid
+  name      String
+  roles     Role[]
+  actions   AppActions[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+enum AppActions {
+  ALL
+  DEFAULT
+}
+
+model Otp {
+  id        String   @id @default(uuid()) @db.Uuid
+  subject   String
+  expiry    DateTime
+  validity  Boolean
+  email     String
+  code      String   @unique
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    String?  @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
